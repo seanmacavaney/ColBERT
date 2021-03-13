@@ -14,7 +14,7 @@ class ModelInference():
         self.colbert = colbert
         self.query_tokenizer = QueryTokenizer(colbert.query_maxlen)
         self.doc_tokenizer = DocTokenizer(colbert.doc_maxlen)
-        
+
         self.amp_manager = MixedPrecisionManager(amp)
 
     def query(self, *args, to_cpu=False, **kw_args):
