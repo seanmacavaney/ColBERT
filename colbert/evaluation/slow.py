@@ -16,6 +16,6 @@ def slow_rerank(args, query, pids, passages):
     ranked_pids = [pids[position] for position in ranked]
     ranked_passages = [passages[position] for position in ranked]
 
-    assert len(ranked_pids) == len(set(ranked_pids))
+    assert len(ranked_pids) == len(ranked_scores)
 
     return list(zip(ranked_scores, ranked_pids, ranked_passages))
