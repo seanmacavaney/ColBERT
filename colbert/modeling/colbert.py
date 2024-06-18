@@ -119,6 +119,17 @@ class ColBERT(BaseColBERT):
         if self.colbert_config.similarity == 'l2':
             assert self.colbert_config.interaction == 'colbert'
             return (-1.0 * ((Q.unsqueeze(2) - D_padded.unsqueeze(1))**2).sum(-1)).max(-1).values.sum(-1)
+        if self.colbert_config.similarity == 'kmaxsim':
+            k = 2
+            Q # [BATCH, QLEN, DIM]
+            D_padded # [BATCH, DLEN, DIM]
+            if self.colbert_config.total_visible_gpus > 0:
+                Q, D_padded, D_mask = Q.cuda(), D_padded.cuda(), D_mask.cuda()
+            interaction_matrix = D_padded @ Q.to(dtype=D_padded.dtype).permute(0, 2, 1) # [BATCH, DLEN, QLEN]
+            D_padding = ~D_mask.view(interaction_matrix.size(0), interaction_matrix.size(1)).bool() # [BATCH, DLEN]
+            interaction_matrix[D_padding] = -9999 # should masking instead be 0?
+            topk_scores = interaction_matrix.topk(k, dim=1).values #  [BATCH, k, QLEN]
+            return topk_scores.sum(dim=-1).sum(dim=-1) # [BATCH]
         return colbert_score(Q, D_padded, D_mask, config=self.colbert_config)
 
     def mask(self, input_ids, skiplist):
